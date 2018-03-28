@@ -9,16 +9,6 @@ from lsst.utils import getPackageDir
 __all__ = ["SeeingData"]
 
 
-"""
-Thoughts: It would be great to remove TimeHandler because:
- - the seeing data should probably be tied to an actual time, rather than to just the seconds from the
-start of the simulation. This is because there are weather trends in the summer which are different than
-in the winter (per Eric Neilsen, DESC).
- - having a dependence on timeHandler here is ok, but it makes it hard for unit tests (unless timehandler is
- moved to some basic package which other opsim packages could then depend on)
- """
-
-
 class SeeingData(object):
     """Read the seeing data from disk and return appropriate FWHM_500 value at a given time.
 
