@@ -4,7 +4,7 @@ import unittest
 import lsst.utils.tests
 from lsst.utils import getPackageDir
 from lsst.sims.seeingModel import SeeingSim
-import time_handler_copy as tc
+from lsst.sims.utils import TimeHandler
 
 
 class TestSeeingSim(unittest.TestCase):
@@ -15,7 +15,7 @@ class TestSeeingSim(unittest.TestCase):
                                       622.32403587,  754.59752265,
                                       869.09018708,  971.02780848])
         # Define time handler and seeing_db for data.
-        self.timeHandler = tc.TimeHandler("2020-01-01")
+        self.timeHandler = TimeHandler("2020-01-01")
         # Time into seeing_db to retrieve seeing.
         self.time = 120005
         self.seeing_db = os.path.join(getPackageDir('sims_seeingModel'), 'data', 'seeing.db')

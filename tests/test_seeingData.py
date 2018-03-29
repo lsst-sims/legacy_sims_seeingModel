@@ -5,13 +5,13 @@ from lsst.utils import getPackageDir
 import lsst.utils.tests
 from lsst.utils.tests import getTempFilePath
 from lsst.sims.seeingModel import SeeingData
-import time_handler_copy as tc
+from lsst.sims.utils import TimeHandler
 
 
 class TestSeeingData(unittest.TestCase):
 
     def setUp(self):
-        self.timeHandler = tc.TimeHandler("2020-01-01")
+        self.timeHandler = TimeHandler("2020-01-01")
         self.seeing_db = os.path.join(getPackageDir('sims_seeingModel'), 'data', 'seeing.db')
 
     def test_basic_information_after_creation(self):
