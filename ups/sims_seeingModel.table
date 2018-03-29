@@ -1,4 +1,10 @@
 setupRequired(utils >= 4.6.0.0)
+# These packages are optional for running sims_seeingModel, but required for tests.
+# Note that 'eups distrib' installs and sets up setupOptional packages.
+# TimeHandler lives in sims_utils
+setupOptional(sims_utils)
+# Throughputs and sims_photUtils are required to automatically set the effwavelens
+# (and this is tested in the unit tests).
 setupOptional(throughputs)
 setupOptional(sims_photUtils)
 
