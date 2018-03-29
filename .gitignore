@@ -1,3 +1,16 @@
+*.dylib
+.sconf_temp
+.sconsign.dblite
+config.log
+bin/
+doc/htmlDir
+tests/.tests
+ups/*.cfgc
+doc/build
+doc/html
+python/lsst/sims/seeingModel/version.py
+.idea
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

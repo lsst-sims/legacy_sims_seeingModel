@@ -45,6 +45,11 @@ class TestSeeingSim(unittest.TestCase):
             self.assertEqual(seeingSim.filter_list[i], f)
         self.assertEqual(len(seeingSim.seeing_model.filter_effwavelens), len(seeingSim.filter_list))
 
+    def test_get_fwhm500(self):
+        # Tested full functionality in SeeingData, but here check that is passing through seeingSim ok.
+        fwhm500 = self.seeingSim.get_fwhm500(self.time)
+        self.assertTrue(isinstance(fwhm500, np.float))
+
     def test_calculate_seeing(self):
         # Check we get one filter with calculate_seeing (one airmass)
         airmass = 1.0

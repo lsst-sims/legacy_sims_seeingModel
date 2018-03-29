@@ -1,3 +1,3 @@
 # -*- python -*-
 from lsst.sconsUtils import scripts
-scripts.BasicSConstruct("sims_environment")
+scripts.BasicSConstruct("sims_seeingModel")

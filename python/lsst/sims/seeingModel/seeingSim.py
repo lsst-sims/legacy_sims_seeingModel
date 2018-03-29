@@ -52,12 +52,27 @@ class SeeingSim(object):
             self.seeing_model.filter_list = filter_list
         self.filter_list = self.seeing_model.filter_list
 
+    def get_fwhm500(self, delta_time):
+        """Get only the FWHM500 at a given time.
+
+        Parameters
+        ----------
+        delta_time : float
+            The time (seconds) from the start of the simulation.
+
+        Returns
+        -------
+        float
+            The FWHM500.
+        """
+        return self.seeing_data.fwhm500_at_time(delta_time)
+
     def calculate_seeing(self, delta_time, filter_name, airmass):
         """Calculate seeing in a single filter -- for backwards compatibility only.
 
         Parameters
         ----------
-        delta_time : int
+        delta_time : float
             The time (seconds) from the start of the simulation.
         filter_name : str
             The single character filter name for the calculation.
@@ -80,7 +95,7 @@ class SeeingSim(object):
 
         Parameters
         ----------
-        delta_time : int
+        delta_time : float
             The time (seconds) from the start of the simulation.
         airmass : float or np.ndarray
             The airmass value(s) at which to calculate seeing.
