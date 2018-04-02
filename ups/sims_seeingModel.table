@@ -4,7 +4,8 @@ setupRequired(utils >= 4.6.0.0)
 # TimeHandler lives in sims_utils
 setupOptional(sims_utils)
 # Throughputs and sims_photUtils are required to automatically set the effwavelens
-# (and this is tested in the unit tests).
+# (and this is tested in the unit tests). Defaults will be used if these packages
+# are not installed.
 setupOptional(throughputs)
 setupOptional(sims_photUtils)
 

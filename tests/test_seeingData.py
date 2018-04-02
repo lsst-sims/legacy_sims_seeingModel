@@ -47,7 +47,7 @@ class TestSeeingData(unittest.TestCase):
         self.assertEqual(fwhm500, seeingData.fwhm500_at_time(800))
 
     def test_using_different_start_month(self):
-        seeingData = SeeingData(tc.TimeHandler("2020-05-24"), self.seeing_db)
+        seeingData = SeeingData(TimeHandler("2020-05-24"), self.seeing_db)
         self.assertEqual(seeingData.offset, 12441600)
         seeingData.read_data()
         self.assertEqual(seeingData.fwhm500_at_time(75400), 0.437314003705978)

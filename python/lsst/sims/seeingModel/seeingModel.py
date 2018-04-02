@@ -1,6 +1,7 @@
 from __future__ import division
 from builtins import object
 import os
+import warnings
 import numpy as np
 try:
     from lsst.sims.photUtils import Bandpass
@@ -45,9 +46,22 @@ class SeeingModel(object):
         self.raw_seeing_wavelength = raw_seeing_wavelength
         if filter_effwavelens is None:
             if no_photUtils:
-                raise ValueError('Could not import sims_photUtils to calculate effective wavelengths;'
-                                 'must define filter_effwavelens.')
-            self._get_effwavelens()
+
+                filter_dict = {'y_effective_wavelength': 971.0,
+                               'z_effective_wavelength': 869.1,
+                               'u_effective_wavelength': 367.0,
+                               'r_effective_wavelength': 622.2,
+                               'g_effective_wavelength': 482.5,
+                               'i_effective_wavelength': 754.5}
+
+                self.filter_list = ('u', 'g' , 'r', 'i', 'z', 'y')
+                self.filter_effwavelens = np.zeros(6, float)
+
+                for i, f in enumerate(self.filter_list):
+                    self.filter_effwavelens[i] = filter_dict['%s_effective_wavelength' % f]
+                warnings.warn("Could not import sims_photUtils, using defaults", Warning)
+            else:
+                self._get_effwavelens()
         else:
             self.filter_effwavelens = filter_effwavelens
 
