@@ -1,4 +1,4 @@
-setupRequired(utils >= 4.6.0.0)
+setupRequired(utils)
 # These packages are optional for running sims_seeingModel, but required for tests.
 # Note that 'eups distrib' installs and sets up setupOptional packages.
 # TimeHandler lives in sims_utils

@@ -8,6 +8,11 @@ try:
     no_photUtils = False
 except ImportError:
     no_photUtils = True
+    default_filter_list = ('u', 'g', 'r', 'i', 'z', 'y')
+    default_wavelength_version = '1.3'
+    default_wavelengths = np.array([367.06988658, 482.68517118,
+                                    622.32403587, 754.59752265,
+                                    869.09018708, 971.02780848])
 
 __all__ = ["SeeingModel"]
 
@@ -45,35 +50,29 @@ class SeeingModel(object):
                                     camera_seeing)
         self.raw_seeing_wavelength = raw_seeing_wavelength
         if filter_effwavelens is None:
-            if no_photUtils:
-
-                filter_dict = {'y_effective_wavelength': 971.0,
-                               'z_effective_wavelength': 869.1,
-                               'u_effective_wavelength': 367.0,
-                               'r_effective_wavelength': 622.2,
-                               'g_effective_wavelength': 482.5,
-                               'i_effective_wavelength': 754.5}
-
-                self.filter_list = ('u', 'g' , 'r', 'i', 'z', 'y')
-                self.filter_effwavelens = np.zeros(6, float)
-
-                for i, f in enumerate(self.filter_list):
-                    self.filter_effwavelens[i] = filter_dict['%s_effective_wavelength' % f]
-                warnings.warn("Could not import sims_photUtils, using defaults", Warning)
-            else:
-                self._get_effwavelens()
+            self._get_effwavelens()
         else:
             self.filter_effwavelens = filter_effwavelens
 
     def _get_effwavelens(self):
-        """Calculate the effective wavelengths, from throughput curves in the $LSST_THOUGHPUTS_DEFAULT dir.
+        """Calculate the effective wavelengths.
+
+        This method will attempt to calculate the effective wavelengths using
+        the throughputs curves in the throughput directory and sims_photUtils.
+
+        If sims_photUtils or throughputs is unavailable, it will just use default values.
+        These default values correspond to throughputs v 1.3 (4/2018).
         """
         self.filter_list = ('u', 'g', 'r', 'i', 'z', 'y')
-        # Read the throughputs curves from the throughputs package.
         fdir = os.getenv('LSST_THROUGHPUTS_DEFAULT')
-        if fdir is None:
-            raise ValueError('Set up the throughputs package or define $LSST_THROUGHPUTS_DEFAULT '
-                             'to point to the directory containing the throughput curves.')
+        if no_photUtils or fdir is None:
+            warnings.warn('Cannot calculate effective wavelengths; either sims_photUtils is '
+                          'unavailable (setup sims_photUtils) or $LSST_THROUGHPUTS_DEFAULT '
+                          'is not undefined (setup throughputs package). '
+                          'Without these, simply using default effective wavelengths from version %s.'
+                          % (default_wavelength_version), Warning)
+        # Read the throughputs curves from the throughputs package.
+        # Note that if sims_photUtils is setup, the throughputs package is as well.
         lsst = {}
         for f in self.filter_list:
             lsst[f] = Bandpass()
