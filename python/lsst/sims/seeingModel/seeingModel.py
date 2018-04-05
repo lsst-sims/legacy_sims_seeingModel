@@ -8,11 +8,11 @@ try:
     no_photUtils = False
 except ImportError:
     no_photUtils = True
-    default_filter_list = ('u', 'g', 'r', 'i', 'z', 'y')
-    default_wavelength_version = '1.3'
-    default_wavelengths = np.array([367.06988658, 482.68517118,
-                                    622.32403587, 754.59752265,
-                                    869.09018708, 971.02780848])
+DEFAULT_WAVELENGTH_VERSION = '1.3'
+DEFAULT_FILTER_LIST = ('u', 'g', 'r', 'i', 'z', 'y')
+DEFAULT_WAVELENGTHS = np.array([367.06988658, 482.68517118,
+                                622.32403587, 754.59752265,
+                                869.09018708, 971.02780848])
 
 __all__ = ["SeeingModel"]
 
@@ -65,22 +65,25 @@ class SeeingModel(object):
         """
         self.filter_list = ('u', 'g', 'r', 'i', 'z', 'y')
         fdir = os.getenv('LSST_THROUGHPUTS_DEFAULT')
-        if no_photUtils or fdir is None:
+        if no_photUtils or (fdir is None):
             warnings.warn('Cannot calculate effective wavelengths; either sims_photUtils is '
                           'unavailable (setup sims_photUtils) or $LSST_THROUGHPUTS_DEFAULT '
                           'is not undefined (setup throughputs package). '
                           'Without these, simply using default effective wavelengths from version %s.'
-                          % (default_wavelength_version), Warning)
-        # Read the throughputs curves from the throughputs package.
-        # Note that if sims_photUtils is setup, the throughputs package is as well.
-        lsst = {}
-        for f in self.filter_list:
-            lsst[f] = Bandpass()
-            lsst[f].readThroughput(os.path.join(fdir, 'total_' + f + '.dat'))
-        eff_wavelens = np.zeros(len(self.filter_list), float)
-        for i, f in enumerate(self.filter_list):
-            eff_wavelens[i] = lsst[f].calcEffWavelen()[1]
-        self.filter_effwavelens = eff_wavelens
+                          % (DEFAULT_WAVELENGTH_VERSION), Warning)
+            self.filter_list = DEFAULT_FILTER_LIST
+            self.filter_effwavelens = DEFAULT_WAVELENGTHS
+        else:
+            # Read the throughputs curves from the throughputs package.
+            # Note that if sims_photUtils is setup, the throughputs package is as well.
+            lsst = {}
+            for f in self.filter_list:
+                lsst[f] = Bandpass()
+                lsst[f].readThroughput(os.path.join(fdir, 'total_' + f + '.dat'))
+            eff_wavelens = np.zeros(len(self.filter_list), float)
+            for i, f in enumerate(self.filter_list):
+                eff_wavelens[i] = lsst[f].calcEffWavelen()[1]
+            self.filter_effwavelens = eff_wavelens
 
     def set_fwhm_zenith_system(self, telescope_seeing, optical_design_seeing, camera_seeing):
         """Calculate the system contribution to FWHM at zenith.
