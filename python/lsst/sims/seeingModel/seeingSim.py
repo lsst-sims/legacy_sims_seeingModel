@@ -67,7 +67,7 @@ class SeeingSim(object):
         """
         return self.seeing_data.fwhm500_at_time(delta_time)
 
-    def calculate_seeing(self, delta_time, filter_name, airmass):
+    def get_seeing_singlefilter(self, delta_time, filter_name, airmass):
         """Calculate seeing in a single filter -- for backwards compatibility only.
 
         Parameters

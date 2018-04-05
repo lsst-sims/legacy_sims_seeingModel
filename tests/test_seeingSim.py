@@ -50,16 +50,16 @@ class TestSeeingSim(unittest.TestCase):
         fwhm500 = self.seeingSim.get_fwhm500(self.time)
         self.assertTrue(isinstance(fwhm500, np.float))
 
-    def test_calculate_seeing(self):
+    def test_get_seeing_singlefilter(self):
         # Check we get one filter with calculate_seeing (one airmass)
         airmass = 1.0
-        fwhm500, fwhmgeom, fwhmeff = self.seeingSim.calculate_seeing(self.time, 'g', airmass)
+        fwhm500, fwhmgeom, fwhmeff = self.seeingSim.get_seeing_singlefilter(self.time, 'g', airmass)
         self.assertTrue(isinstance(fwhm500, np.float))
         self.assertTrue(isinstance(fwhmgeom, np.float))
         self.assertTrue(isinstance(fwhmeff, np.float))
         # Check that we get one filter with calculate_seeing (multiple airmasses)
         airmass = np.arange(1.0, 1.5, 0.2)
-        fwhm500, fwhmgeom, fwhmeff = self.seeingSim.calculate_seeing(self.time, 'g', airmass)
+        fwhm500, fwhmgeom, fwhmeff = self.seeingSim.get_seeing_singlefilter(self.time, 'g', airmass)
         self.assertTrue(isinstance(fwhm500, np.float))
         self.assertEqual(len(fwhmgeom), len(airmass))
         self.assertEqual(len(fwhmeff), len(airmass))
