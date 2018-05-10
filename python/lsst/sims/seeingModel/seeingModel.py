@@ -68,7 +68,7 @@ class SeeingModel(object):
         if no_photUtils or (fdir is None):
             warnings.warn('Cannot calculate effective wavelengths; either sims_photUtils is '
                           'unavailable (setup sims_photUtils) or $LSST_THROUGHPUTS_DEFAULT '
-                          'is not undefined (setup throughputs package). '
+                          'is undefined (setup throughputs package). '
                           'Without these, simply using default effective wavelengths from version %s.'
                           % (DEFAULT_WAVELENGTH_VERSION), Warning)
             self.filter_list = DEFAULT_FILTER_LIST
