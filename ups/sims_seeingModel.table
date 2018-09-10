@@ -10,5 +10,4 @@ setupOptional(throughputs)
 setupOptional(sims_photUtils)
 
 envPrepend(PYTHONPATH, ${PRODUCT_DIR}/python)
-envPrepend(PATH, ${PRODUCT_DIR}/scripts)
 
