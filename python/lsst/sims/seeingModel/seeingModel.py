@@ -1,18 +1,9 @@
 from __future__ import division
 from builtins import object
-import os
-import warnings
 import numpy as np
-try:
-    from lsst.sims.photUtils import Bandpass
-    no_photUtils = False
-except ImportError:
-    no_photUtils = True
-DEFAULT_WAVELENGTH_VERSION = '1.3'
-DEFAULT_FILTER_LIST = ('u', 'g', 'r', 'i', 'z', 'y')
-DEFAULT_WAVELENGTHS = np.array([367.06988658, 482.68517118,
-                                622.32403587, 754.59752265,
-                                869.09018708, 971.02780848])
+from .seeingModelConfig import SeeingModelConfig
+from lsst.sims.seeingModel import version
+
 
 __all__ = ["SeeingModel"]
 
@@ -21,83 +12,73 @@ class SeeingModel(object):
     """LSST FWHM calculations for FWHM_effective and FWHM_geometric.
     Calculations of the delivered values are based on equations in Document-20160
     ("Atmospheric and Delivered Image Quality in OpSim" by Bo Xin, George Angeli, Zeljko Ivezic)
-
-    Parameters
-    ----------
-    telescope_seeing : float, opt
-        The contribution to the FWHM at zenith from the telescope, in arcseconds.
-        Default 0.25"
-    optical_design_seeing : float, opt
-        The contribution to the FWHM at zenith from the optical design, in arcseconds.
-        Default 0.08"
-    camera_seeing : float, opt
-        The contribution to the FWHM at zenith from the camera components, in arcseconds.
-        Default 0.30"
-    raw_seeing_wavelength : float, opt
-        The wavelength (in nm) of the provided value of the atmospheric fwhm at zenith.
-        Default 500nm.
-    filter_effwavelen : numpy.ndarray or None, opt
-        An array containing the effective wavelengths per filter in filter_list, in nm.
-        If this is None (default), sims_photUtils will be used to calculate the values for ugrizy
-        based on the setup throughputs repository.
     """
-    def __init__(self, telescope_seeing=0.25,
-                 optical_design_seeing=0.08, camera_seeing=0.30,
-                 raw_seeing_wavelength=500,
-                 filter_effwavelens=None):
-        self.set_fwhm_zenith_system(telescope_seeing,
-                                    optical_design_seeing,
-                                    camera_seeing)
-        self.raw_seeing_wavelength = raw_seeing_wavelength
-        if filter_effwavelens is None:
-            self._get_effwavelens()
-        else:
-            self.filter_effwavelens = filter_effwavelens
+    def configure(self, config=None, configOverrideFile=None):
+        """Configure the model. After 'configure' the model config will be frozen.
 
-    def _get_effwavelens(self):
-        """Calculate the effective wavelengths.
+        Also calculates the fwhm_zenith_system, using self._set_fwhm_zenith_system.
 
-        This method will attempt to calculate the effective wavelengths using
-        the throughputs curves in the throughput directory and sims_photUtils.
-
-        If sims_photUtils or throughputs is unavailable, it will just use default values.
-        These default values correspond to throughputs v 1.3 (4/2018).
+        Parameters
+        ----------
+        config: SeeingModelConfig, opt
+            A configuration class for the seeing model.
+            This can can be None, in which case the default values are used.
+            The user could override the config parameters before passing,
+            or could provide a configOverrideFile.
+        configOverrideFile: str, opt
+            The filename for a SeeingModelConfig override.
+            This file should only contain overrides for the default values.
         """
-        self.filter_list = ('u', 'g', 'r', 'i', 'z', 'y')
-        fdir = os.getenv('LSST_THROUGHPUTS_DEFAULT')
-        if no_photUtils or (fdir is None):
-            warnings.warn('Cannot calculate effective wavelengths; either sims_photUtils is '
-                          'unavailable (setup sims_photUtils) or $LSST_THROUGHPUTS_DEFAULT '
-                          'is undefined (setup throughputs package). '
-                          'Without these, simply using default effective wavelengths from version %s.'
-                          % (DEFAULT_WAVELENGTH_VERSION), Warning)
-            self.filter_list = DEFAULT_FILTER_LIST
-            self.filter_effwavelens = DEFAULT_WAVELENGTHS
+        if config is None:
+            self.config = SeeingModelConfig()
         else:
-            # Read the throughputs curves from the throughputs package.
-            # Note that if sims_photUtils is setup, the throughputs package is as well.
-            lsst = {}
-            for f in self.filter_list:
-                lsst[f] = Bandpass()
-                lsst[f].readThroughput(os.path.join(fdir, 'total_' + f + '.dat'))
-            eff_wavelens = np.zeros(len(self.filter_list), float)
-            for i, f in enumerate(self.filter_list):
-                eff_wavelens[i] = lsst[f].calcEffWavelen()[1]
-            self.filter_effwavelens = eff_wavelens
+            if not isinstance(config, SeeingModelConfig):
+                raise ValueError('Must use a SeeingModelConfig.')
+            self.config = config
+        if configOverrideFile is not None:
+            self.config.load(configOverrideFile)
+        self.config.validate()
+        self.config.freeze()
+        self._set_fwhm_zenith_system()
+        self.eff_wavelens = np.array(self.config.filter_effwavelens)
 
-    def set_fwhm_zenith_system(self, telescope_seeing, optical_design_seeing, camera_seeing):
+    def efd_requirements(self):
+        """Specify data to request from the EFD.
+
+        Returns
+        -------
+        List of str, float
+            List of the EFD columns, delta Time to request information into past (from now).
+        """
+        return self.config.efd_columns, self.config.efd_delta_time
+
+    def status(self):
+        """Report configuration parameters and version information.
+
+        Returns
+        -------
+        OrderedDict
+        """
+        status = OrderedDict()
+        status['SeeingModel'] = '%s' % version.__version
+        status['git_sha'] = '%s' % version.__fingerprint__
+        for k, v in self.config.iteritems():
+            status[k] = v
+        return status
+
+    def _set_fwhm_zenith_system(self):
         """Calculate the system contribution to FWHM at zenith.
 
         This is simply the individual telescope, optics, and camera contributions
         combined in quadrature.
         """
-        self.fwhm_system_zenith = np.sqrt(telescope_seeing**2 +
-                                          optical_design_seeing**2 +
-                                          camera_seeing**2)
+        self.fwhm_system_zenith = np.sqrt(self.config.telescope_seeing**2 +
+                                          self.config.optical_design_seeing**2 +
+                                          self.config.camera_seeing**2)
 
-    def seeing_at_airmass(self, fwhm_500, airmass=1.0):
+    def seeing_at_airmass(self, fwhm_z, airmass=1.0):
         """Calculate the FWHM_eff and FWHM_geom as a function of wavelength, at a range of airmasses,
-        given FWHM_500 (seeing at 500nm / raw_seeing_wavelength at zenith).
+        given FWHM_z (typically, seeing at 500nm / raw_seeing_wavelength at zenith).
 
         FWHM_geom represents the geometric size of the PSF; FWHM_eff represents the FWHM of a
         single gaussian which encloses the same number of pixels as N_eff (the number of pixels
@@ -111,11 +92,8 @@ class SeeingModel(object):
 
         Parameters
         ----------
-        fwhm_500 : float
+        fwhm_z : float
             The FWHM_500 (FWHM at 500nm at zenith). Fiducial values is 0.6".
-        eff_wavelen : numpy.ndarray
-            The effective wavelengths of the system bandpasses.
-            Can be calculated using get_effwavelens.
         airmass : float or numpy.ndarray
             The airmass at which to calculate the FWHMeff and FWHMgeom values.
             Default 1.0.
@@ -131,14 +109,14 @@ class SeeingModel(object):
             in the order of <filter><airmass> (i.e. eff_wavelen[0] = u, 1-d array over airmass range).
         """
         airmass_correction = np.power(airmass, 0.6)
-        wavelen_correction = np.power(self.raw_seeing_wavelength / self.filter_effwavelens, 0.3)
+        wavelen_correction = np.power(self.config.raw_seeing_wavelength / self.eff_wavelens, 0.3)
         if isinstance(airmass, np.ndarray):
             fwhm_system = self.fwhm_system_zenith * np.outer(np.ones(len(wavelen_correction)),
                                                              airmass_correction)
-            fwhm_atmo = fwhm_500 * np.outer(wavelen_correction, airmass_correction)
+            fwhm_atmo = fwhm_z * np.outer(wavelen_correction, airmass_correction)
         else:
             fwhm_system = self.fwhm_system_zenith * airmass_correction
-            fwhm_atmo = fwhm_500 * wavelen_correction * airmass_correction
+            fwhm_atmo = fwhm_z * wavelen_correction * airmass_correction
         # Calculate combined FWHMeff.
         fwhm_eff = 1.16 * np.sqrt(fwhm_system ** 2 + 1.04 * fwhm_atmo ** 2)
         # Translate to FWHMgeom.
