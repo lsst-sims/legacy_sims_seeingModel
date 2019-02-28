@@ -1,4 +1,5 @@
 import os
+import warnings
 import lsst.pex.config as pexConfig
 
 

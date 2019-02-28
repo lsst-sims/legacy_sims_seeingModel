@@ -1,5 +1,5 @@
-from __future__ import division
 from builtins import object
+from collections import OrderedDict
 import numpy as np
 from .seeingModelConfig import SeeingModelConfig
 from lsst.sims.seeingModel import version
@@ -60,8 +60,8 @@ class SeeingModel(object):
         OrderedDict
         """
         status = OrderedDict()
-        status['SeeingModel'] = '%s' % version.__version
-        status['git_sha'] = '%s' % version.__fingerprint__
+        status['SeeingModel_version'] = '%s' % version.__version__
+        status['SeeingModel_sha'] = '%s' % version.__fingerprint__
         for k, v in self.config.iteritems():
             status[k] = v
         return status

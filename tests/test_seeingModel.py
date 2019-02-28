@@ -38,6 +38,23 @@ class TestSeeingModel(unittest.TestCase):
         # Test specifying a config override filename.
         # TBD.
 
+    def test_status(self):
+        seeingModel = SeeingModel()
+        seeingModel.configure()
+        confDict = seeingModel.status()
+        expected_keys = ['SeeingModel_version', 'SeeingModel_sha', 'efd_columns', 'efd_delta_time',
+                         'filter_list', 'filter_effwavelens', 'raw_seeing_wavelength',
+                         'telescope_seeing', 'camera_seeing', 'optical_design_seeing']
+        for k in expected_keys:
+            self.assertTrue(k in confDict.keys())
+
+    def test_efd_requirements(self):
+        seeingModel = SeeingModel()
+        seeingModel.configure(self.config)
+        cols, deltaT = seeingModel.efd_requirements()
+        self.assertEqual(self.config.efd_columns, cols)
+        self.assertEqual(self.config.efd_delta_time, deltaT)
+
     def test_fwhm_system_zenith(self):
         # Check calculation is being done as expected.
         seeingModel = SeeingModel()
