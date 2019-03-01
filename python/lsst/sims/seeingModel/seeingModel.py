@@ -40,6 +40,7 @@ class SeeingModel(object):
         self.config.validate()
         self.config.freeze()
         self._set_fwhm_zenith_system()
+        self.filter_list = self.config.filter_list
         self.eff_wavelens = np.array(self.config.filter_effwavelens)
 
     def efd_requirements(self):
