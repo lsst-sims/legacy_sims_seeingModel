@@ -10,6 +10,7 @@ doc/build
 doc/html
 python/lsst/sims/seeingModel/version.py
 .idea
+pytest_session.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

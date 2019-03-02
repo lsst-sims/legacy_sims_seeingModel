@@ -31,7 +31,7 @@ class SeeingData(object):
         self.seeing_dates = None
         self.seeing_values = None
 
-    def fwhm500_at_time(self, delta_time):
+    def __call__(self, delta_time):
         """Get the FWHM_500 value for the specified time.
 
         Parameters

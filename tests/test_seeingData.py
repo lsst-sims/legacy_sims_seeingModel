@@ -33,27 +33,27 @@ class TestSeeingData(unittest.TestCase):
     def test_fwhm500_at_time(self):
         seeingData = SeeingData(self.timeHandler, self.seeing_db)
         seeingData.read_data()
-        self.assertEqual(seeingData.fwhm500_at_time(75400), 0.859431982040405)
-        self.assertEqual(seeingData.fwhm500_at_time(76700), 0.646009027957916)
-        self.assertEqual(seeingData.fwhm500_at_time(63190400), 0.64860999584198)
-        self.assertEqual(seeingData.fwhm500_at_time(189424900), 0.699440002441406)
+        self.assertEqual(seeingData(75400), 0.859431982040405)
+        self.assertEqual(seeingData(76700), 0.646009027957916)
+        self.assertEqual(seeingData(63190400), 0.64860999584198)
+        self.assertEqual(seeingData(189424900), 0.699440002441406)
         # Test time selection from seeing data.
-        fwhm500 =  seeingData.fwhm500_at_time(800)
+        fwhm500 =  seeingData(800)
         # Hack seeing data to remove first date, thus db does not start at zero.
         seeingData.seeing_dates = seeingData.seeing_dates[:-1]
         seeingData.seeing_values = seeingData.seeing_values[:-1]
         seeingData.time_range = seeingData.seeing_dates[-1] - seeingData.seeing_dates[0]
         seeingData.min_time = seeingData.seeing_dates[0]
-        self.assertEqual(fwhm500, seeingData.fwhm500_at_time(800))
+        self.assertEqual(fwhm500, seeingData(800))
 
     def test_using_different_start_month(self):
         seeingData = SeeingData(TimeHandler("2020-05-24"), self.seeing_db)
         self.assertEqual(seeingData.offset, 12441600)
         seeingData.read_data()
-        self.assertEqual(seeingData.fwhm500_at_time(75400), 0.437314003705978)
-        self.assertEqual(seeingData.fwhm500_at_time(76700), 0.510206997394562)
-        self.assertEqual(seeingData.fwhm500_at_time(63190400), 0.453994989395142)
-        self.assertEqual(seeingData.fwhm500_at_time(189424900), 0.386815994977951)
+        self.assertEqual(seeingData(75400), 0.437314003705978)
+        self.assertEqual(seeingData(76700), 0.510206997394562)
+        self.assertEqual(seeingData(63190400), 0.453994989395142)
+        self.assertEqual(seeingData(189424900), 0.386815994977951)
 
     def test_alternate_db(self):
         # Create temporary data file, use it as the seeing_db.

@@ -12,8 +12,29 @@ class SeeingModel(object):
     """LSST FWHM calculations for FWHM_effective and FWHM_geometric.
     Calculations of the delivered values are based on equations in Document-20160
     ("Atmospheric and Delivered Image Quality in OpSim" by Bo Xin, George Angeli, Zeljko Ivezic)
+
+    Parameters
+    ----------
+    config: SeeingModelConfig, opt
+        A configuration class for the seeing model.
+        This can be None, in which case the default SeeingModelConfig is used.
+        The user should set any non-default values for SeeingModelConfig before
+        configuration of the actual SeeingModel.
+
+    self.efd_requirements and self.map_requirements are also set.
+    efd_requirements is a tuple: (list of str, float).
+    This corresponds to the data columns required from the EFD and the amount of time history required.
+    map_requirements is a list of str.
+    This corresponds to the data columns required in the map dictionary passed when calculating the
+    processed telemetry values.
     """
-    def configure(self, config=None, configOverrideFile=None):
+    def __init__ (self, config=None):
+        self._configure(config=config)
+        self.efd_requirements = (self._config.efd_columns, self._config.efd_delta_time)
+        self.map_requirements = ['airmass']
+        self.seeingcol = self._config.efd_columns[0]
+
+    def _configure(self, config=None):
         """Configure the model. After 'configure' the model config will be frozen.
 
         Also calculates the fwhm_zenith_system, using self._set_fwhm_zenith_system.
@@ -22,36 +43,19 @@ class SeeingModel(object):
         ----------
         config: SeeingModelConfig, opt
             A configuration class for the seeing model.
-            This can can be None, in which case the default values are used.
-            The user could override the config parameters before passing,
-            or could provide a configOverrideFile.
-        configOverrideFile: str, opt
-            The filename for a SeeingModelConfig override.
-            This file should only contain overrides for the default values.
+            This can be None, in which case the default values are used.
         """
         if config is None:
-            self.config = SeeingModelConfig()
+            self._config = SeeingModelConfig()
         else:
             if not isinstance(config, SeeingModelConfig):
                 raise ValueError('Must use a SeeingModelConfig.')
-            self.config = config
-        if configOverrideFile is not None:
-            self.config.load(configOverrideFile)
-        self.config.validate()
-        self.config.freeze()
+            self._config = config
+        self._config.validate()
+        self._config.freeze()
         self._set_fwhm_zenith_system()
-        self.filter_list = self.config.filter_list
-        self.eff_wavelens = np.array(self.config.filter_effwavelens)
-
-    def efd_requirements(self):
-        """Specify data to request from the EFD.
-
-        Returns
-        -------
-        List of str, float
-            List of the EFD columns, delta Time to request information into past (from now).
-        """
-        return self.config.efd_columns, self.config.efd_delta_time
+        self.filter_list = tuple(self._config.filter_list)
+        self.eff_wavelens = np.array(self._config.filter_effwavelens)
 
     def status(self):
         """Report configuration parameters and version information.
@@ -63,8 +67,9 @@ class SeeingModel(object):
         status = OrderedDict()
         status['SeeingModel_version'] = '%s' % version.__version__
         status['SeeingModel_sha'] = '%s' % version.__fingerprint__
-        for k, v in self.config.iteritems():
+        for k, v in self._config.iteritems():
             status[k] = v
+        status['map_columns'] = self.map_requirements
         return status
 
     def _set_fwhm_zenith_system(self):
@@ -73,13 +78,13 @@ class SeeingModel(object):
         This is simply the individual telescope, optics, and camera contributions
         combined in quadrature.
         """
-        self.fwhm_system_zenith = np.sqrt(self.config.telescope_seeing**2 +
-                                          self.config.optical_design_seeing**2 +
-                                          self.config.camera_seeing**2)
+        self.fwhm_system_zenith = np.sqrt(self._config.telescope_seeing**2 +
+                                          self._config.optical_design_seeing**2 +
+                                          self._config.camera_seeing**2)
 
-    def seeing_at_airmass(self, fwhm_z, airmass=1.0):
-        """Calculate the FWHM_eff and FWHM_geom as a function of wavelength, at a range of airmasses,
-        given FWHM_z (typically, seeing at 500nm / raw_seeing_wavelength at zenith).
+    def __call__(self, efdData, mapDict):
+        """Calculate the seeing values FWHM_eff and FWHM_geom at the given airmasses,
+        for the specified effective wavelengths, given FWHM_zenith (typically FWHM_500).
 
         FWHM_geom represents the geometric size of the PSF; FWHM_eff represents the FWHM of a
         single gaussian which encloses the same number of pixels as N_eff (the number of pixels
@@ -93,12 +98,15 @@ class SeeingModel(object):
 
         Parameters
         ----------
-        fwhm_z : float
-            The FWHM_500 (FWHM at 500nm at zenith). Fiducial values is 0.6".
-        airmass : float or numpy.ndarray
-            The airmass at which to calculate the FWHMeff and FWHMgeom values.
-            Default 1.0.
-            Can be a single value or a numpy array.
+        efdData: dict
+            Dictionary of input telemetry, typically from the EFD.
+            This must contain columns self.efd_requirements.
+            (work in progress on handling time history).
+        mapDict: dict
+            Dictionary of map values over which to calculate the processed telemetry.
+            (e.g. mapDict = {'ra': [], 'dec': [], 'altitude': [], 'azimuth': [], 'airmass': []})
+            Here we use 'airmass' .. which can be a single value or a numpy array.
+
 
         Returns
         -------
@@ -109,8 +117,10 @@ class SeeingModel(object):
             If airmass is a numpy array, FWHMeff and FWHMgeom are 2-d arrays,
             in the order of <filter><airmass> (i.e. eff_wavelen[0] = u, 1-d array over airmass range).
         """
+        fwhm_z = efdData[self.seeingcol]
+        airmass = mapDict['airmass']
         airmass_correction = np.power(airmass, 0.6)
-        wavelen_correction = np.power(self.config.raw_seeing_wavelength / self.eff_wavelens, 0.3)
+        wavelen_correction = np.power(self._config.raw_seeing_wavelength / self.eff_wavelens, 0.3)
         if isinstance(airmass, np.ndarray):
             fwhm_system = self.fwhm_system_zenith * np.outer(np.ones(len(wavelen_correction)),
                                                              airmass_correction)
