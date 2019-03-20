@@ -1,9 +1,9 @@
 from __future__ import division
 from builtins import object
-from datetime import datetime
 import os
 import sqlite3
 import numpy as np
+from astropy.time import Time
 from lsst.utils import getPackageDir
 
 __all__ = ["SeeingData"]
@@ -15,45 +15,52 @@ class SeeingData(object):
 
     Parameters
     ----------
-    time_handler : :class:`.TimeHandler`
-        The instance of the simulation time handler.
+    start_time : astropy.time.Time
+        The time of the start of the simulation.
+        The seeing database will be assumed to start on Jan 01 of the same year.
     seeing_db : str or None, opt
         The name of the seeing database. If None (default), this will use the Seeing.db file
         in the 'data' directory of this package.
+    offset_year : float, opt
+        Offset into the cloud database by 'offset_year' years. Default 0.
     """
-    def __init__(self, time_handler, seeing_db=None):
+    def __init__(self, start_time, seeing_db=None, offset_year=0):
         self.seeing_db = seeing_db
         if self.seeing_db is None:
             self.seeing_db = os.path.join(getPackageDir('sims_seeingModel'), 'data', 'seeing.db')
-        model_time_start = datetime(time_handler.initial_dt.year, 1, 1)
-        self.offset = time_handler.time_since_given_datetime(model_time_start,
-                                                             reverse=True)
+
+        # Seeing database starts in Jan 01 of the year of the start of the simulation
+        year_start = start_time.datetime.year + offset_year
+        self.start_time = Time('%d-01-01' % year_start, format='isot', scale='tai')
+
         self.seeing_dates = None
         self.seeing_values = None
 
-    def __call__(self, delta_time):
+    def __call__(self, time):
         """Get the FWHM_500 value for the specified time.
 
         Parameters
         ----------
-        delta_time : int
-            The time (seconds) from the start of the simulation.
+        time : astropy.time.Time
+            Time in the simulation for which to find the 'current' zenith seeing values.
+            The difference between this time and the start_time, plus the offset,
+            will be used to query the seeing database.
 
         Returns
         -------
         float
             The FWHM_500(") closest to the specified time.
         """
-        delta_time += self.offset
+        delta_time = (time - self.start_time).sec
         # Find the date to look for in the time range of the data.
         # Note that data dates should not necessarily start at zero.
-        date = delta_time % self.time_range + self.min_time
-        idx = np.searchsorted(self.seeing_dates, date)
+        dbdate = delta_time % self.time_range + self.min_time
+        idx = np.searchsorted(self.seeing_dates, dbdate)
         # searchsorted ensures that left < date < right
         # but we need to know if date is closer to left or to right
         left = self.seeing_dates[idx - 1]
         right = self.seeing_dates[idx]
-        if date - left < right - date:
+        if dbdate - left < right - dbdate:
             idx -= 1
         return self.seeing_values[idx]
 

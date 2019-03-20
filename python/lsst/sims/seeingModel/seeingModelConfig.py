@@ -40,6 +40,11 @@ class SeeingModelConfig(pexConfig.Config):
     efd_delta_time = pexConfig.Field(doc="Length (delta time) of history to request from the EFD (seconds)",
                                      dtype=float,
                                      default=0)
+    target_columns = pexConfig.ListField(doc="Names of the keys for the airmass in the "
+                                             "scheduler target maps",
+                                         dtype=str,
+                                         default=['airmass'])
+
 
 def get_effwavelens(filter_list=('u', 'g', 'r', 'i', 'z', 'y')):
     """Calculate the effective wavelengths for 'filter_list'.

@@ -24,15 +24,15 @@ class SeeingModel(object):
     self.efd_requirements and self.map_requirements are also set.
     efd_requirements is a tuple: (list of str, float).
     This corresponds to the data columns required from the EFD and the amount of time history required.
-    map_requirements is a list of str.
-    This corresponds to the data columns required in the map dictionary passed when calculating the
+    target_requirements is a list of str.
+    This corresponds to the data columns required in the target map dictionary passed when calculating the
     processed telemetry values.
     """
     def __init__ (self, config=None):
         self._configure(config=config)
         self.efd_requirements = (self._config.efd_columns, self._config.efd_delta_time)
-        self.map_requirements = ['airmass']
-        self.seeingcol = self._config.efd_columns[0]
+        self.target_requirements = self._config.target_columns
+        self.efd_seeing = self._config.efd_columns[0]
 
     def _configure(self, config=None):
         """Configure the model. After 'configure' the model config will be frozen.
@@ -57,20 +57,19 @@ class SeeingModel(object):
         self.filter_list = tuple(self._config.filter_list)
         self.eff_wavelens = np.array(self._config.filter_effwavelens)
 
-    def status(self):
+    def config_info(self):
         """Report configuration parameters and version information.
 
         Returns
         -------
         OrderedDict
         """
-        status = OrderedDict()
-        status['SeeingModel_version'] = '%s' % version.__version__
-        status['SeeingModel_sha'] = '%s' % version.__fingerprint__
+        config_info = OrderedDict()
+        config_info['SeeingModel_version'] = '%s' % version.__version__
+        config_info['SeeingModel_sha'] = '%s' % version.__fingerprint__
         for k, v in self._config.iteritems():
-            status[k] = v
-        status['map_columns'] = self.map_requirements
-        return status
+            config_info[k] = v
+        return config_info
 
     def _set_fwhm_zenith_system(self):
         """Calculate the system contribution to FWHM at zenith.
@@ -82,7 +81,7 @@ class SeeingModel(object):
                                           self._config.optical_design_seeing**2 +
                                           self._config.camera_seeing**2)
 
-    def __call__(self, efdData, mapDict):
+    def __call__(self, efdData, targetDict):
         """Calculate the seeing values FWHM_eff and FWHM_geom at the given airmasses,
         for the specified effective wavelengths, given FWHM_zenith (typically FWHM_500).
 
@@ -102,23 +101,23 @@ class SeeingModel(object):
             Dictionary of input telemetry, typically from the EFD.
             This must contain columns self.efd_requirements.
             (work in progress on handling time history).
-        mapDict: dict
-            Dictionary of map values over which to calculate the processed telemetry.
-            (e.g. mapDict = {'ra': [], 'dec': [], 'altitude': [], 'azimuth': [], 'airmass': []})
+        targetDict: dict
+            Dictionary of target map values over which to calculate the processed telemetry.
+            (e.g. targetDict = {'ra': [], 'dec': [], 'altitude': [], 'azimuth': [], 'airmass': []})
             Here we use 'airmass' .. which can be a single value or a numpy array.
 
 
         Returns
         -------
-        numpy.ndarray, numpy.ndarray
+        dict of numpy.ndarray, numpy.ndarray
             FWHMeff, FWHMgeom: both are the same shape numpy.ndarray.
             If airmass is a single value, FWHMeff & FWHMgeom are 1-d arrays,
             with the same order as eff_wavelen (i.e. eff_wavelen[0] = u, then FWHMeff[0] = u).
             If airmass is a numpy array, FWHMeff and FWHMgeom are 2-d arrays,
             in the order of <filter><airmass> (i.e. eff_wavelen[0] = u, 1-d array over airmass range).
         """
-        fwhm_z = efdData[self.seeingcol]
-        airmass = mapDict['airmass']
+        fwhm_z = efdData[self.efd_seeing]
+        airmass = targetDict['airmass']
         airmass_correction = np.power(airmass, 0.6)
         wavelen_correction = np.power(self._config.raw_seeing_wavelength / self.eff_wavelens, 0.3)
         if isinstance(airmass, np.ndarray):
@@ -132,7 +131,7 @@ class SeeingModel(object):
         fwhm_eff = 1.16 * np.sqrt(fwhm_system ** 2 + 1.04 * fwhm_atmo ** 2)
         # Translate to FWHMgeom.
         fwhm_geom = self.fwhmEff_to_fwhmGeom(fwhm_eff)
-        return fwhm_eff, fwhm_geom
+        return {'fwhmEff': fwhm_eff, 'fwhmGeom': fwhm_geom}
 
     @staticmethod
     def fwhmEff_to_fwhmGeom(fwhm_eff):
