@@ -93,3 +93,15 @@ class SeeingData(object):
         self.min_time = self.seeing_dates[0]
         self.max_time = self.seeing_dates[-1]
         self.time_range = self.max_time - self.min_time
+
+    def config_info(self):
+        """Report information about configuration of this data.
+
+        Returns
+        -------
+        OrderedDict
+        """
+        config_info = OrderedDict()
+        config_info['Start time for db'] = self.start_time
+        config_info['Seeing database'] = self.seeing_db
+        return config_info
