@@ -16,10 +16,10 @@ class TestGetEffWavelens(unittest.TestCase):
     def test_get_effwavelens(self):
         # In default setup, should get all filters.
         filters = ('u', 'g', 'r', 'i', 'z', 'y')
-        effwavelens = get_effwavelens()
+        photUtils_version, throughputs_version, effwavelens = get_effwavelens()
         self.assertEqual(len(filters), len(effwavelens))
         filters = ('u', 'g')
-        effwavelens = get_effwavelens(filters)
+        photUtils_version, throughputs_version, effwavelens = get_effwavelens(filters)
         self.assertEqual(len(filters), len(effwavelens))
 
 
