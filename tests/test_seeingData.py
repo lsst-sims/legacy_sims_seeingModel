@@ -17,8 +17,6 @@ class TestSeeingData(unittest.TestCase):
 
     def test_basic_information_after_creation(self):
         seeingData = SeeingData(self.time, seeing_db=self.seeing_db)
-        self.assertIsNone(seeingData.seeing_dates)
-        self.assertIsNone(seeingData.seeing_values)
         self.assertEqual(seeingData.start_time, self.time)
         self.assertEqual(seeingData.seeing_db, self.seeing_db)
         # And check sets seeing_db appropriately if not provided.

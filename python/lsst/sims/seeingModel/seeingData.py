@@ -35,6 +35,7 @@ class SeeingData(object):
 
         self.seeing_dates = None
         self.seeing_values = None
+        self.read_data()
 
     def __call__(self, time):
         """Get the FWHM_500 value for the specified time.
@@ -101,7 +102,7 @@ class SeeingData(object):
         -------
         OrderedDict
         """
-        config_info = OrderedDict()
+        config_info = {}
         config_info['Start time for db'] = self.start_time
         config_info['Seeing database'] = self.seeing_db
         return config_info

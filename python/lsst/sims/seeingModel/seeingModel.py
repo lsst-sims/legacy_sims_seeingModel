@@ -81,7 +81,7 @@ class SeeingModel(object):
                                           self._config.optical_design_seeing**2 +
                                           self._config.camera_seeing**2)
 
-    def __call__(self, efdData, targetDict):
+    def __call__(self, fwhm_z, airmass):
         """Calculate the seeing values FWHM_eff and FWHM_geom at the given airmasses,
         for the specified effective wavelengths, given FWHM_zenith (typically FWHM_500).
 
@@ -97,15 +97,10 @@ class SeeingModel(object):
 
         Parameters
         ----------
-        efdData: dict
-            Dictionary of input telemetry, typically from the EFD.
-            This must contain columns self.efd_requirements.
-            (work in progress on handling time history).
-        targetDict: dict
-            Dictionary of target map values over which to calculate the processed telemetry.
-            (e.g. targetDict = {'ra': [], 'dec': [], 'altitude': [], 'azimuth': [], 'airmass': []})
-            Here we use 'airmass' .. which can be a single value or a numpy array.
-
+        fwhm_z: float, or efdData dict
+            FWHM at zenith (arcsec).
+        airmass: float, np.array, or targetDict
+            Airmass (unitless).
 
         Returns
         -------
@@ -116,8 +111,10 @@ class SeeingModel(object):
             If airmass is a numpy array, FWHMeff and FWHMgeom are 2-d arrays,
             in the order of <filter><airmass> (i.e. eff_wavelen[0] = u, 1-d array over airmass range).
         """
-        fwhm_z = efdData[self.efd_seeing]
-        airmass = targetDict['airmass']
+        if isinstance(fwhm_z, dict):
+            fwhm_z = fwhm_z[self.efd_seeing]
+        if isinstance(airmass, dict):
+            airmass = airmass['airmass']
         airmass_correction = np.power(airmass, 0.6)
         wavelen_correction = np.power(self._config.raw_seeing_wavelength / self.eff_wavelens, 0.3)
         if isinstance(airmass, np.ndarray):
