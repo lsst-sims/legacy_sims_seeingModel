@@ -29,12 +29,12 @@ class SeeingModel(object):
     processed telemetry values.
     """
     def __init__ (self, config=None):
-        self._configure(config=config)
+        self.configure(config=config)
         self.efd_requirements = (self._config.efd_columns, self._config.efd_delta_time)
         self.target_requirements = self._config.target_columns
         self.efd_seeing = self._config.efd_columns[0]
 
-    def _configure(self, config=None):
+    def configure(self, config=None):
         """Configure the model. After 'configure' the model config will be frozen.
 
         Also calculates the fwhm_zenith_system, using self._set_fwhm_zenith_system.
