@@ -1,3 +1,7 @@
 from .seeingData import *
 from .seeingModel import *
-from .seeingSim import *
+from .seeingModelConfig import *
+from .utils import *
+from .version import *
+
+
