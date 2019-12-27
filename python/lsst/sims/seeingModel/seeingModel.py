@@ -28,7 +28,10 @@ class SeeingModel(object):
     This corresponds to the data columns required in the target map dictionary passed when calculating the
     processed telemetry values.
     """
-    def __init__ (self, config=None):
+    def __init__(self, config=None):
+        self._config = None
+        self.filter_list = None
+        self.eff_wavelens = None
         self.configure(config=config)
         self.efd_requirements = (self._config.efd_columns, self._config.efd_delta_time)
         self.target_requirements = self._config.target_columns
@@ -47,10 +50,15 @@ class SeeingModel(object):
         """
         if config is None:
             self._config = SeeingModelConfig()
-        else:
-            if not isinstance(config, SeeingModelConfig):
-                raise ValueError('Must use a SeeingModelConfig.')
+        elif isinstance(config, dict):
+            self._config = SeeingModelConfig()
+            for key in config:
+                setattr(self._config, key, config[key])
+        elif isinstance(config, SeeingModelConfig):
             self._config = config
+        else:
+            raise RuntimeError(f'Expecting `None`, dictionary or `SeeingModelConfig`, '
+                               f'got {type(config)}: {config!r}.')
         self._config.validate()
         self._config.freeze()
         self._set_fwhm_zenith_system()
