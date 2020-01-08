@@ -33,7 +33,7 @@ class TestSeeingModel(unittest.TestCase):
         seeingModel = SeeingModel(self.config)
         self.assertEqual(seeingModel._config.filter_list, self.config.filter_list)
         # Test specifying an incorrect config.
-        self.assertRaises(ValueError, SeeingModel, 0.8)
+        self.assertRaises(RuntimeError, SeeingModel, 0.8)
 
     def test_status(self):
         seeingModel = SeeingModel()
