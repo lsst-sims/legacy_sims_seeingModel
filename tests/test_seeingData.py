@@ -6,8 +6,9 @@ from lsst.utils import getPackageDir
 import lsst.utils.tests
 from lsst.utils.tests import getTempFilePath
 from lsst.sims.seeingModel import SeeingData
-from lsst.sims.utils import TimeHandler
 
+# Unit test here uses oldest/original opsim seeing database, "Seeing.db".
+# Could be updated to use a new DB, but that would require changing some of these hard-coded numbers.
 
 class TestSeeingData(unittest.TestCase):
 
@@ -21,7 +22,7 @@ class TestSeeingData(unittest.TestCase):
         self.assertEqual(seeingData.seeing_db, self.seeing_db)
         # And check sets seeing_db appropriately if not provided.
         seeingData = SeeingData(self.time, seeing_db=None)
-        self.assertEqual(seeingData.seeing_db, self.seeing_db)
+        self.assertIsNotNone(seeingData.seeing_db)
 
     def test_information_after_read(self):
         seeingData = SeeingData(self.time, seeing_db=self.seeing_db)

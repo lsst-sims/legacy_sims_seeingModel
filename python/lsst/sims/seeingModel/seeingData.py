@@ -19,7 +19,7 @@ class SeeingData(object):
         The time of the start of the simulation.
         The seeing database will be assumed to start on Jan 01 of the same year.
     seeing_db : str or None, opt
-        The name of the seeing database. If None (default), this will use the Seeing.db file
+        The name of the seeing database. If None (default), this will use the simsee_pachon_58777_13.db file
         in the 'data' directory of this package.
     offset_year : float, opt
         Offset into the cloud database by 'offset_year' years. Default 0.
@@ -27,7 +27,8 @@ class SeeingData(object):
     def __init__(self, start_time, seeing_db=None, offset_year=0):
         self.seeing_db = seeing_db
         if self.seeing_db is None:
-            self.seeing_db = os.path.join(getPackageDir('sims_seeingModel'), 'data', 'seeing.db')
+            self.seeing_db = os.path.join(getPackageDir('sims_seeingModel'), 'data',
+                                          'simsee_pachon_58777_13.db')
 
         # Seeing database starts in Jan 01 of the year of the start of the simulation
         year_start = start_time.datetime.year + offset_year
