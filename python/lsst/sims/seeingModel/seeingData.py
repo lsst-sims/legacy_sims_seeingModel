@@ -19,8 +19,14 @@ class SeeingData(object):
         The time of the start of the simulation.
         The seeing database will be assumed to start on Jan 01 of the same year.
     seeing_db : str or None, opt
-        The name of the seeing database. If None (default), this will use the simsee_pachon_58777_13.db file
-        in the 'data' directory of this package.
+        The name of the seeing database.
+        If None (default), this will use the simsee_pachon_58777_13.db file in the 'data' directory
+        of this package.
+        Other available seeing databases from sims_seeingModel include:
+        seeing.db (the original, less-variable, 3 year seeing database)
+        simsee_pachon_5877_13.db (the current default, 10 year, seeing database)
+        simsee_pachon_5877_16.db (a similar, but slightly offset, 13 year seeing database)
+        For more info on simsee_pachon_5877*, see https://github.com/lsst/sims_seeingModel/issues/2
     offset_year : float, opt
         Offset into the cloud database by 'offset_year' years. Default 0.
     """
