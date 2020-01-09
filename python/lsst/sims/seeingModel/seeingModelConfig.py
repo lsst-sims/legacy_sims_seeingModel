@@ -3,11 +3,11 @@ import lsst.pex.config as pexConfig
 
 __all__ = ['SeeingModelConfig']
 
-DEFAULT_THROUGHPUTS_VERSION = '1.1'
+DEFAULT_THROUGHPUTS_VERSION = '1.5'
 DEFAULT_FILTER_LIST = ['u', 'g', 'r', 'i', 'z', 'y']
-DEFAULT_WAVELENGTHS = [367.06988658, 482.68517118,
-                       622.32403587, 754.59752265,
-                       869.09018708, 971.02780848]
+DEFAULT_WAVELENGTHS = [368.48, 480.20,
+                       623.12, 754.17,
+                       869.05, 973.64]
 
 
 class SeeingModelConfig(pexConfig.Config):
