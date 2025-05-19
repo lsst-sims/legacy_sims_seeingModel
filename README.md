@@ -1,3 +1,5 @@
+Moved to [rubin-sim](github.com/lsst/rubin_sim)
+
 # sims_seeingModel
 
 A model of the LSST seeing behavior with wavelength, airmass and system contributions.
